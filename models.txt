@@ -1,0 +1,157 @@
+from django.db import models
+from django.contrib.auth.models import User  # Modelo de usuario predeterminado de Django
+
+
+# Roles asignados a usuarios
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)  # Los nombres de roles deben ser únicos
+    users = models.ManyToManyField(User, related_name='roles', blank=True)  # Relación con usuarios
+
+    def __str__(self):
+        return self.name
+
+
+"""
+#Clase para crear el personaje
+class Character(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='characters')
+    name = models.CharField(max_length=100)
+    level = models.IntegerField(default=1)
+    experience = models.IntegerField(default=0)
+    health = models.IntegerField(default=100)
+    resources = models.IntegerField(default=50)
+    abilities = models.ManyToManyField('Ability', related_name='characters_with_ability', blank=True)
+
+    def __str__(self):
+        return self.name
+
+"""
+
+class Character(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='characters')
+    name = models.CharField(max_length=100)
+    level = models.IntegerField(default=1)
+    experience = models.IntegerField(default=0)
+    health = models.IntegerField(default=100)
+    resources = models.IntegerField(default=50)
+    abilities = models.ManyToManyField('Ability', related_name='characters_with_ability', blank=True)
+
+    def __str__(self):
+        return self.name
+
+    """
+    Este cambio simplifica la gestión de habilidades asociadas al personaje y elimina la necesidad de usar explícitamente el modelo CharacterAbility en el formulario.
+    """
+
+
+#clase  Habilidades asignadas a personajes
+class Ability(models.Model):
+    TYPE_CHOICES = [
+        ('Attack', 'Attack'),
+        ('Defense', 'Defense'),
+        ('Support', 'Support'),
+    ]
+    name = models.CharField(max_length=100, unique=True)  # Nombre único para habilidades
+    description = models.TextField()
+    type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+
+    def __str__(self):
+        return f"{self.name} ({self.type})"
+
+
+# Relación entre personajes y habilidades
+class CharacterAbility(models.Model):
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='character_abilities')
+    ability = models.ForeignKey(Ability, on_delete=models.CASCADE, related_name='ability_characters')
+
+    def __str__(self):
+        return f"{self.character.name} - {self.ability.name}"
+
+
+
+# Misiones asignadas a personajes
+class Mission(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+    ]
+    description = models.TextField()
+    reward = models.CharField(max_length=100)  # Recompensa por la misión
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
+    items = models.TextField(blank=True, null=True)  # Objetos relacionados con la misión
+
+    def __str__(self):
+        return f"Misión: {self.description[:30]}..."  # Mostrar primeros 30 caracteres
+
+
+# Relación entre personajes y misiones
+class CharacterMission(models.Model):
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='missions')
+    mission = models.ForeignKey(Mission, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.character.name} - {self.mission.description[:30]}..."
+
+
+# NPCs interactuables
+class NPC(models.Model):
+    name = models.CharField(max_length=100, unique=True)  # Nombres únicos para NPCs
+    role = models.CharField(max_length=100)  # Rol del NPC
+    description = models.TextField()
+    items = models.TextField(blank=True, null=True)  # Objetos que el NPC puede poseer
+
+    def __str__(self):
+        return f"{self.name} ({self.role})"
+
+
+# Combates entre personajes y NPCs
+class Combat(models.Model):
+    RESULT_CHOICES = [
+        ('Victory', 'Victory'),
+        ('Defeat', 'Defeat'),
+        ('Draw', 'Draw'),
+    ]
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='combats')
+    npc = models.ForeignKey(NPC, on_delete=models.CASCADE, related_name='combats')
+    result = models.CharField(max_length=50, choices=RESULT_CHOICES)
+    date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.character.name} vs {self.npc.name} ({self.result})"
+
+
+# Proyectos gestionados por usuarios
+class Project(models.Model):
+    name = models.CharField(max_length=100, unique=True)  # Nombre único para proyectos
+    description = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
+
+    def __str__(self):
+        return self.name
+
+
+# Tareas dentro de proyectos
+class Task(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('In Progress', 'In Progress'),
+        ('Completed', 'Completed'),
+    ]
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='tasks')
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
+
+    def __str__(self):
+        return f"{self.name} ({self.project.name})"
+
+
+# Hitos dentro de proyectos
+class Milestone(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='milestones')
+    description = models.TextField()
+    date = models.DateField()
+
+    def __str__(self):
+        return f"Hito: {self.description[:30]} ({self.project.name})"

@@ -1,0 +1,144 @@
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import Character , Ability , Mission
+from .forms import CharacterForm
+from django.shortcuts import render
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+
+def character_list(request):
+    characters = Character.objects.all()  # Obteniendo todos los personajes
+    return render(request, 'games/character_list.html', {'characters': characters})
+
+
+class CharacterCreateView(CreateView):
+    model = Character
+    fields = ['name', 'level', 'experience', 'health', 'resources','abilities']
+    template_name = 'games/character_form.html'
+    success_url = reverse_lazy('character_list')
+
+    def form_valid(self, form):
+        try:
+            # Asigna el usuario genérico al personaje
+            user = user.objects.get(id=3)  # ID del usuario genérico
+            form.instance.user = user
+        except user.DoesNotExist:
+            # Si el usuario no existe, genera un error de formulario
+            form.add_error(None, "El usuario genérico no existe.")
+            return self.form_invalid(form)
+        return super().form_valid(form)
+
+
+"""
+
+class CharacterCreateView(CreateView):
+    model = Character
+    fields = ['name', 'level', 'experience', 'health', 'resources']
+    template_name = 'games/character_form.html'
+    success_url = reverse_lazy('character_list')
+
+    def form_valid(self, form):
+        # Asigna el usuario genérico al personaje
+        try:
+            user = user.objects.get(id=3)  # Verifica que el usuario existe
+            form.instance.user = user
+        except user.DoesNotExist:
+            form.add_error(None, "No se encontró un usuario genérico para asignar.")
+            return self.form_invalid(form)
+        return super().form_valid(form)
+"""
+
+
+##Vistas para el personaje
+
+# Listar personajes
+class CharacterListView(ListView):
+    model = Character
+    template_name = 'games/character_list.html'
+    context_object_name = 'characters'
+
+# Crear personaje
+class CharacterCreateView(CreateView):
+    model = Character
+    fields = ['name', 'level', 'experience', 'health', 'resources']
+    template_name = 'games/character_form.html'
+    success_url = reverse_lazy('character_list')
+
+
+# Actualizar personaje
+class CharacterUpdateView(UpdateView):
+    model = Character
+    form_class = CharacterForm
+    template_name = 'games/character_form.html'
+    success_url = reverse_lazy('character_list')
+
+
+"""class CharacterUpdateView(UpdateView):
+    model = Character
+    fields = ['name', 'level', 'experience', 'health', 'resources']
+    template_name = 'games/character_form.html'
+    success_url = reverse_lazy('character_list')
+"""
+
+
+# Eliminar personaje
+class CharacterDeleteView(DeleteView):
+    model = Character
+    template_name = 'games/character_confirm_delete.html'
+    success_url = reverse_lazy('character_list')
+
+
+
+
+##Vistas para las habiliades
+
+# Listar habilidades
+class AbilityListView(ListView):
+    model = Ability
+    template_name = 'games/ability_list.html'
+    context_object_name = 'abilities'
+
+# Crear habilidad
+class AbilityCreateView(CreateView):
+    model = Ability
+    fields = ['name', 'description', 'type']  # Usa los campos definidos en el modelo
+    template_name = 'games/ability_form.html'
+    success_url = reverse_lazy('ability_list')
+
+# Actualizar habilidad
+class AbilityUpdateView(UpdateView):
+    model = Ability
+    fields = ['name', 'description', 'type']
+    template_name = 'games/ability_form.html'
+    success_url = reverse_lazy('ability_list')
+
+# Eliminar habilidad
+class AbilityDeleteView(DeleteView):
+    model = Ability
+    template_name = 'games/ability_confirm_delete.html'
+    success_url = reverse_lazy('ability_list')
+
+
+##Vistas para misiones
+
+class MissionListView(ListView):
+    model = Mission
+    template_name = 'games/mission_list.html'
+    context_object_name = 'missions'
+
+class MissionCreateView(CreateView):
+    model = Mission
+    fields = ['description', 'reward', 'status', 'items']
+    template_name = 'games/mission_form.html'
+    success_url = reverse_lazy('mission_list')
+
+class MissionUpdateView(UpdateView):
+    model = Mission
+    fields = ['description', 'reward', 'status', 'items']
+    template_name = 'games/mission_form.html'
+    success_url = reverse_lazy('mission_list')
+
+class MissionDeleteView(DeleteView):
+    model = Mission
+    template_name = 'games/mission_confirm_delete.html'
+    success_url = reverse_lazy('mission_list')
